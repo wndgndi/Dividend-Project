@@ -3,7 +3,6 @@ package com.example.dividendproject.web;
 import com.example.dividendproject.model.Company;
 import com.example.dividendproject.persist.entity.CompanyEntity;
 import com.example.dividendproject.service.CompanyService;
-import java.util.List;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -23,9 +22,16 @@ import org.springframework.web.bind.annotation.RestController;
 public class CompanyController {
     private CompanyService companyService;
 
+//    @GetMapping("/autocomplete")
+//    public ResponseEntity<?> autocomplete(@RequestParam String keyword)  {
+//        var result = this.companyService.autocomplete(keyword);
+//        return ResponseEntity.ok(result);
+//    }
+
     @GetMapping("/autocomplete")
-    public ResponseEntity<?> autocomplete(@RequestParam String keyword) {
-        return null;
+    public ResponseEntity<?> autocomplete(@RequestParam String keyword)  {
+        var result = this.companyService.getCompanyNamesByKeyword(keyword);
+        return ResponseEntity.ok(result);
     }
 
     @GetMapping
@@ -43,7 +49,7 @@ public class CompanyController {
             throw new RuntimeException("ticker is empty");
         }
         Company company = this.companyService.save(ticker);
-
+        this.companyService.addAutocompleteKeyword(company.getName());
         return ResponseEntity.ok(company);
     }
 
