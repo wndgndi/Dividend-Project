@@ -1,4 +1,4 @@
-package com.example.dividendproject.constants;
+package com.example.dividendproject.model.constants;
 
 import lombok.AllArgsConstructor;
 
