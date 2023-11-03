@@ -8,6 +8,7 @@ import com.example.dividendproject.persist.repository.CompanyRepository;
 import com.example.dividendproject.persist.repository.DividendRepository;
 import com.example.dividendproject.scraper.Scraper;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import org.apache.commons.collections4.Trie;
@@ -27,7 +28,7 @@ public class CompanyService {
     private final DividendRepository dividendRepository;
 
     public Company save(String ticker) {
-        boolean exists = this.companyRepository.existsByTicker(ticker);
+        boolean exists = this.companyRepository.existsByTicker(ticker.toUpperCase());
         if(exists) {
            throw new RuntimeException("already exists ticker -> " + ticker);
         }
@@ -40,12 +41,12 @@ public class CompanyService {
 
     private Company storeCompanyAndDividend(String ticker) {
         // ticker 를 기준으로 회사를 스크래핑
-        Company company = this.yahooFinanceScraper.scrapCompanyByTicker(ticker);
+        Company company = this.yahooFinanceScraper.scrapCompanyByTicker(ticker.toUpperCase());
         if(ObjectUtils.isEmpty(company)) {
             throw new RuntimeException("failed to scrap ticker -> " + ticker);
         }
 
-        // 해당 회사가 존재할 경우, 회사의 배당금 정보를 스크래핑111
+        // 해당 회사가 존재할 경우, 회사의 배당금 정보를 스크래핑
         ScrapedResult scrapedResult = this.yahooFinanceScraper.scrap(company);
 
         // 스크래핑 결과
@@ -77,7 +78,17 @@ public class CompanyService {
             .collect(Collectors.toList());
     }
 
-    public void deleteAutocompleteKeyword(String keysord) {
-        this.trie.remove(keysord);
+    public void deleteAutocompleteKeyword(String keyword) {
+        this.trie.remove(keyword);
+    }
+
+    public String deleteCompany(String ticker) {
+        var company = this.companyRepository.findByTicker(ticker.toUpperCase())
+            .orElseThrow(() -> new RuntimeException("존재하지 않는 회사입니다."));
+        this.dividendRepository.deleteAllByCompanyId(company.getId());
+        this.companyRepository.delete(company);
+
+        this.deleteAutocompleteKeyword(company.getName());
+        return company.getName();
     }
 }
