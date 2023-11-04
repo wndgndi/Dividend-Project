@@ -1,5 +1,8 @@
 package com.example.dividendproject.service;
 
+import com.example.dividendproject.exception.input.AlreadyExistUserException;
+import com.example.dividendproject.exception.input.NoUsernameException;
+import com.example.dividendproject.exception.input.PasswordException;
 import com.example.dividendproject.model.Auth;
 import com.example.dividendproject.model.MemberEntity;
 import com.example.dividendproject.persist.repository.MemberRepository;
@@ -28,7 +31,7 @@ public class MemberService implements UserDetailsService {
     public MemberEntity register(Auth.SignUp member) {
         boolean exists = this.memberRepository.existsByUsername(member.getUsername());
         if(exists) {
-            throw new RuntimeException("이미 사용 중인 아이디 입니다.");
+            throw new AlreadyExistUserException();
         }
         member.setPassword(this.passwordEncoder.encode(member.getPassword()));
         var result = this.memberRepository.save(member.toEntity());
@@ -38,10 +41,10 @@ public class MemberService implements UserDetailsService {
 
     public MemberEntity authenticate(Auth.SignIn member) {
         var user = this.memberRepository.findByUsername(member.getUsername())
-            .orElseThrow(() -> new RuntimeException("존재하지 않는 ID 입니다."));
+            .orElseThrow(NoUsernameException::new);
 
         if(!this.passwordEncoder.matches(member.getPassword(), user.getPassword())) {
-            throw new RuntimeException("비밀번호가 일치하지 않습니다.");
+            throw new PasswordException();
         }
 
         return user;
